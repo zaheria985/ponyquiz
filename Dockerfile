@@ -32,7 +32,10 @@ COPY --from=build --chown=nextjs:nodejs /app/node_modules/tsx ./node_modules/tsx
 COPY --from=build --chown=nextjs:nodejs /app/node_modules/esbuild ./node_modules/esbuild
 RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
 
-USER nextjs
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 EXPOSE 3000
 
-CMD ["sh", "-c", "node db/bootstrap.js && node db/migrate.js && node server.js"]
+# Entrypoint runs as root to fix volume permissions, then drops to nextjs
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
