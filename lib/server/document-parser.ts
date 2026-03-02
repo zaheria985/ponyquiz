@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { PDFParse } from "pdf-parse";
-import mammoth from "mammoth";
+
+const pdfParse = require("pdf-parse"); // CJS - no ESM export
+const mammoth = require("mammoth"); // CJS - no ESM export
 
 export interface DraftQuestion {
   text: string;
@@ -38,15 +39,13 @@ async function extractText(
   }
 
   if (ext === ".pdf") {
-    const pdf = new PDFParse({ data: new Uint8Array(buffer) });
-    const result = await pdf.getText();
-    await pdf.destroy();
+    const result = await pdfParse(buffer);
     return result.text;
   }
 
   // .doc or .docx
   const result = await mammoth.extractRawText({ buffer });
-  return result.value;
+  return result.value as string;
 }
 
 const SYSTEM_PROMPT = `You are an expert educational content parser. Your job is to analyze document text and extract quiz questions from it.
@@ -178,8 +177,9 @@ export async function parseDocument(
           isCorrect: Boolean(o.isCorrect),
         }));
       // Ensure at least one correct option
-      if (question.options && question.options.length > 0 && !question.options.some((o) => o.isCorrect)) {
-        question.options[0].isCorrect = true;
+      const opts = question.options;
+      if (opts && opts.length > 0 && !opts.some((o) => o.isCorrect)) {
+        opts[0].isCorrect = true;
       }
     } else {
       question.answer = item.answer ? String(item.answer) : "";
