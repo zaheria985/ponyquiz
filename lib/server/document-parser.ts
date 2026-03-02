@@ -74,15 +74,32 @@ Respond ONLY with a JSON array of question objects. Do not include any other tex
 If the document doesn't contain any identifiable questions or educational content, return an empty array: []`;
 
 /**
- * Attempt to parse text that is already formatted as Q:/A: pairs.
- * Returns DraftQuestion[] if 2+ Q: lines are found, otherwise null (fall back to AI).
+ * Attempt to parse structured Q/A text. Supports two formats:
+ * 1. Q:/A: markers (case-insensitive)
+ * 2. Numbered questions ending with ? followed by answer lines
+ * Returns DraftQuestion[] if pattern detected, null otherwise (falls back to AI).
  */
 function tryParseQAPairs(text: string): DraftQuestion[] | null {
   const lines = text.split(/\r?\n/);
-  const qLineCount = lines.filter((l) => /^\s*q:/i.test(l)).length;
-  if (qLineCount < 2) return null;
 
-  // Walk through lines collecting Q/A pairs
+  // Try Q:/A: format first
+  const qLineCount = lines.filter((l) => /^\s*q:/i.test(l)).length;
+  if (qLineCount >= 2) {
+    return parseQAMarkers(lines);
+  }
+
+  // Try numbered question format: "1. Question text" or "1) Question text"
+  const numberedQCount = lines.filter((l) =>
+    /^\s*\d+[\.\)]\s+\S/.test(l)
+  ).length;
+  if (numberedQCount >= 2) {
+    return parseNumberedQuestions(lines);
+  }
+
+  return null;
+}
+
+function parseQAMarkers(lines: string[]): DraftQuestion[] | null {
   const questions: DraftQuestion[] = [];
   let currentQ = "";
   let currentA = "";
@@ -90,7 +107,6 @@ function tryParseQAPairs(text: string): DraftQuestion[] | null {
 
   for (const line of lines) {
     if (/^\s*q:/i.test(line)) {
-      // Flush previous pair
       if (currentQ) {
         questions.push({
           text: currentQ,
@@ -106,15 +122,51 @@ function tryParseQAPairs(text: string): DraftQuestion[] | null {
       currentA = line.replace(/^\s*a:\s*/i, "").trim();
       collectingA = true;
     } else if (collectingA && line.trim()) {
-      // Continuation line for multi-line answer
       currentA += " " + line.trim();
     } else if (!collectingA && currentQ && line.trim()) {
-      // Continuation line for multi-line question
       currentQ += " " + line.trim();
     }
   }
 
-  // Flush last pair
+  if (currentQ) {
+    questions.push({
+      text: currentQ,
+      type: "flashcard_qa",
+      answer: currentA.trim(),
+      difficulty: "beginner",
+    });
+  }
+
+  return questions.length >= 2 ? questions : null;
+}
+
+function parseNumberedQuestions(lines: string[]): DraftQuestion[] | null {
+  const questions: DraftQuestion[] = [];
+  let currentQ = "";
+  let currentA = "";
+
+  for (const line of lines) {
+    // Numbered line = new question (e.g. "1. What is..." or "23) Describe...")
+    if (/^\s*\d+[\.\)]\s+\S/.test(line)) {
+      // Flush previous pair
+      if (currentQ) {
+        questions.push({
+          text: currentQ,
+          type: "flashcard_qa",
+          answer: currentA.trim(),
+          difficulty: "beginner",
+        });
+      }
+      currentQ = line.replace(/^\s*\d+[\.\)]\s*/, "").trim();
+      currentA = "";
+    } else if (currentQ && line.trim()) {
+      // Non-numbered, non-empty line = answer content
+      // Strip leading emoji/star markers (⭐★✦✧●•◆▸►etc)
+      const cleaned = line.trim().replace(/^[\u2B50\u2605\u2606\u2726\u2727\u2728\u25CF\u2022\u25C6\u25B8\u25BA\uFE0F\u200D*\-•]+\s*/, "");
+      currentA += (currentA ? " " : "") + cleaned;
+    }
+  }
+
   if (currentQ) {
     questions.push({
       text: currentQ,
