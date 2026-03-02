@@ -71,13 +71,17 @@ export default function FlashcardCard({
           </div>
 
           {type === "labeled_diagram" && imagePath && activeHotspot ? (
-            <div className="w-full mb-3">
-              <div className="relative w-full max-h-[70vh] rounded-lg overflow-hidden">
+            <div className="w-full mb-3 flex justify-center">
+              <div
+                className="relative rounded-lg overflow-hidden"
+                style={{ maxWidth: "100%" }}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePath}
                   alt={imageAlt || "Diagram"}
-                  className="w-full max-h-[70vh] object-contain block"
+                  className="block max-h-[70vh]"
+                  style={{ maxWidth: "100%", height: "auto" }}
                 />
                 {/* Highlight the active hotspot with an arrow marker */}
                 <div
@@ -151,13 +155,17 @@ export default function FlashcardCard({
           </div>
 
           {type === "labeled_diagram" && imagePath && activeHotspot ? (
-            <div className="w-full mb-3">
-              <div className="relative w-full max-h-[70vh] rounded-lg overflow-hidden">
+            <div className="w-full mb-3 flex justify-center">
+              <div
+                className="relative rounded-lg overflow-hidden"
+                style={{ maxWidth: "100%" }}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePath}
                   alt={imageAlt || "Diagram"}
-                  className="w-full max-h-[70vh] object-contain block"
+                  className="block max-h-[70vh]"
+                  style={{ maxWidth: "100%", height: "auto" }}
                 />
                 <div
                   className="absolute px-2 py-1 rounded-md text-xs font-bold -translate-x-1/2 -translate-y-1/2 whitespace-nowrap"

@@ -59,12 +59,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Collect all answers from flashcard-type questions to use as distractors
+    const allFlashcardAnswers = questions
+      .filter((q) => (q.type === "flashcard_qa" || q.type === "flashcard_term") && q.answer)
+      .map((q) => q.answer as string);
+
     // Strip correct answers from questions sent to client
     const clientQuestions = questions.map((q) => {
       // For labeled_diagram: only send the active hotspot coordinates (no label),
       // and use a generic question text so the answer isn't revealed.
       let activeHotspot: { x: number; y: number } | null = null;
       let text = q.text;
+      let options = q.options
+        ? q.options.map((opt: { text: string }) => ({ text: opt.text }))
+        : null;
+
       if (q.type === "labeled_diagram" && q.answer && Array.isArray(q.hotspots)) {
         const match = (q.hotspots as { x: number; y: number; label: string }[])
           .find((h) => h.label === q.answer);
@@ -74,6 +83,26 @@ export async function POST(request: NextRequest) {
         text = "What is this part?";
       }
 
+      // Auto-generate multiple choice for flashcard Q/A and term questions
+      if ((q.type === "flashcard_qa" || q.type === "flashcard_term") && q.answer && !options) {
+        const correctAnswer = q.answer;
+        // Pick up to 3 random wrong answers from other questions
+        const distractors = allFlashcardAnswers
+          .filter((a) => a.toLowerCase().trim() !== correctAnswer.toLowerCase().trim())
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
+
+        if (distractors.length >= 2) {
+          // Enough distractors — present as multiple choice
+          const allOptions = [
+            { text: correctAnswer },
+            ...distractors.map((d) => ({ text: d })),
+          ].sort(() => Math.random() - 0.5);
+          options = allOptions;
+        }
+        // If not enough distractors, falls through to short-answer
+      }
+
       return {
         id: q.id,
         text,
@@ -81,9 +110,7 @@ export async function POST(request: NextRequest) {
         topic_id: q.topic_id,
         topic_name: q.topic_name,
         difficulty: q.difficulty,
-        options: q.options
-          ? q.options.map((opt: { text: string }) => ({ text: opt.text }))
-          : null,
+        options,
         image_id: q.image_id,
         image_path: q.image_path,
         image_alt: q.image_alt,

@@ -166,14 +166,25 @@ export default function QuestionRenderer({
         )}
 
         {(question.type === "flashcard_qa" || question.type === "flashcard_term") && (
-          <ShortAnswerQuestion
-            text={question.text}
-            type={question.type as "flashcard_qa" | "flashcard_term"}
-            onAnswer={handleAnswer}
-            disabled={isAnswered}
-            selectedAnswer={selectedAnswer}
-            correctAnswer={feedback?.correctAnswer || null}
-          />
+          question.options && question.options.length > 0 ? (
+            <MultipleChoiceQuestion
+              text={question.text}
+              options={question.options}
+              onAnswer={handleAnswer}
+              disabled={isAnswered}
+              selectedAnswer={selectedAnswer}
+              correctAnswer={feedback?.correctAnswer || null}
+            />
+          ) : (
+            <ShortAnswerQuestion
+              text={question.text}
+              type={question.type as "flashcard_qa" | "flashcard_term"}
+              onAnswer={handleAnswer}
+              disabled={isAnswered}
+              selectedAnswer={selectedAnswer}
+              correctAnswer={feedback?.correctAnswer || null}
+            />
+          )
         )}
 
         {submitting && (

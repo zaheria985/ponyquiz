@@ -601,14 +601,25 @@ function GradedQuestionRenderer({
         )}
 
         {(question.type === "flashcard_qa" || question.type === "flashcard_term") && (
-          <ShortAnswerQuestion
-            text={question.text}
-            type={question.type as "flashcard_qa" | "flashcard_term"}
-            onAnswer={onAnswer}
-            disabled={false}
-            selectedAnswer={selectedAnswer}
-            correctAnswer={null}
-          />
+          question.options && question.options.length > 0 ? (
+            <MultipleChoiceQuestion
+              text={question.text}
+              options={question.options}
+              onAnswer={onAnswer}
+              disabled={false}
+              selectedAnswer={selectedAnswer}
+              correctAnswer={null}
+            />
+          ) : (
+            <ShortAnswerQuestion
+              text={question.text}
+              type={question.type as "flashcard_qa" | "flashcard_term"}
+              onAnswer={onAnswer}
+              disabled={false}
+              selectedAnswer={selectedAnswer}
+              correctAnswer={null}
+            />
+          )
         )}
       </div>
     </div>

@@ -44,17 +44,19 @@ export default function ImageQuestion({
       </h3>
 
       {imagePath && (
-        <div
-          className="mb-4 rounded-lg overflow-hidden border"
-          style={{ borderColor: "var(--border-light)" }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imagePath}
-            alt={imageAlt || "Question image"}
-            className="w-full max-h-80 object-contain"
-            style={{ backgroundColor: "var(--surface-muted)" }}
-          />
+        <div className="mb-4 flex justify-center">
+          <div
+            className="rounded-lg overflow-hidden border"
+            style={{ borderColor: "var(--border-light)", maxWidth: "100%" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imagePath}
+              alt={imageAlt || "Question image"}
+              className="block max-h-80"
+              style={{ maxWidth: "100%", height: "auto" }}
+            />
+          </div>
         </div>
       )}
 

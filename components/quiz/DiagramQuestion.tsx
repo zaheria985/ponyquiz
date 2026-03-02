@@ -46,32 +46,34 @@ export default function DiagramQuestion({
         </h3>
 
         {imagePath && (
-          <div
-            className="mb-4 rounded-lg overflow-hidden border relative"
-            style={{ borderColor: "var(--border-light)" }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imagePath}
-              alt={imageAlt || "Diagram"}
-              className="w-full max-h-80 object-contain"
-              style={{ backgroundColor: "var(--surface-muted)" }}
-            />
-            {activeHotspot && (
-              <div
-                className="absolute w-7 h-7 rounded-full border-3 flex items-center justify-center text-sm font-bold -translate-x-1/2 -translate-y-1/2 animate-pulse"
-                style={{
-                  left: `${activeHotspot.x}%`,
-                  top: `${activeHotspot.y}%`,
-                  backgroundColor: "var(--error-text)",
-                  borderColor: "#fff",
-                  color: "#fff",
-                  boxShadow: "0 0 0 3px var(--error-text), 0 2px 8px rgba(0,0,0,0.3)",
-                }}
-              >
-                ?
-              </div>
-            )}
+          <div className="mb-4 flex justify-center">
+            <div
+              className="relative rounded-lg overflow-hidden border"
+              style={{ borderColor: "var(--border-light)", maxWidth: "100%" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imagePath}
+                alt={imageAlt || "Diagram"}
+                className="block max-h-80"
+                style={{ maxWidth: "100%", height: "auto" }}
+              />
+              {activeHotspot && (
+                <div
+                  className="absolute w-7 h-7 rounded-full border-3 flex items-center justify-center text-sm font-bold -translate-x-1/2 -translate-y-1/2 animate-pulse"
+                  style={{
+                    left: `${activeHotspot.x}%`,
+                    top: `${activeHotspot.y}%`,
+                    backgroundColor: "var(--error-text)",
+                    borderColor: "#fff",
+                    color: "#fff",
+                    boxShadow: "0 0 0 3px var(--error-text), 0 2px 8px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  ?
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -134,32 +136,34 @@ export default function DiagramQuestion({
       </h3>
 
       {imagePath && (
-        <div
-          className="mb-4 rounded-lg overflow-hidden border relative"
-          style={{ borderColor: "var(--border-light)" }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imagePath}
-            alt={imageAlt || "Diagram"}
-            className="w-full max-h-80 object-contain"
-            style={{ backgroundColor: "var(--surface-muted)" }}
-          />
-          {activeHotspot && (
-            <div
-              className="absolute w-7 h-7 rounded-full border-3 flex items-center justify-center text-sm font-bold -translate-x-1/2 -translate-y-1/2 animate-pulse"
-              style={{
-                left: `${activeHotspot.x}%`,
-                top: `${activeHotspot.y}%`,
-                backgroundColor: "var(--error-text)",
-                borderColor: "#fff",
-                color: "#fff",
-                boxShadow: "0 0 0 3px var(--error-text), 0 2px 8px rgba(0,0,0,0.3)",
-              }}
-            >
-              ?
-            </div>
-          )}
+        <div className="mb-4 flex justify-center">
+          <div
+            className="relative rounded-lg overflow-hidden border"
+            style={{ borderColor: "var(--border-light)", maxWidth: "100%" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imagePath}
+              alt={imageAlt || "Diagram"}
+              className="block max-h-80"
+              style={{ maxWidth: "100%", height: "auto" }}
+            />
+            {activeHotspot && (
+              <div
+                className="absolute w-7 h-7 rounded-full border-3 flex items-center justify-center text-sm font-bold -translate-x-1/2 -translate-y-1/2 animate-pulse"
+                style={{
+                  left: `${activeHotspot.x}%`,
+                  top: `${activeHotspot.y}%`,
+                  backgroundColor: "var(--error-text)",
+                  borderColor: "#fff",
+                  color: "#fff",
+                  boxShadow: "0 0 0 3px var(--error-text), 0 2px 8px rgba(0,0,0,0.3)",
+                }}
+              >
+                ?
+              </div>
+            )}
+          </div>
         </div>
       )}
 
