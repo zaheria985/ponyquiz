@@ -47,8 +47,21 @@ async function extractText(
 
   // .doc or .docx
   const mammoth = require("mammoth"); // CJS, lazy-loaded
-  const result = await mammoth.extractRawText({ buffer });
-  return result.value as string;
+  try {
+    const result = await mammoth.extractRawText({ buffer });
+    const text = result.value as string;
+    if (!text || text.trim().length === 0) {
+      throw new Error(
+        `Could not extract text from "${ext}" file. Try saving as .docx or .txt instead.`
+      );
+    }
+    return text;
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("Try saving")) throw err;
+    throw new Error(
+      `Failed to read "${ext}" file. Try saving as .docx or .txt instead.`
+    );
+  }
 }
 
 const SYSTEM_PROMPT = `You are an expert educational content parser. Your job is to analyze document text and extract quiz questions from it.
@@ -93,7 +106,9 @@ function stripAMarker(line: string): string {
 }
 
 function tryParseQAPairs(text: string): DraftQuestion[] | null {
-  const lines = text.split(/\r?\n/);
+  // Normalize whitespace: collapse runs of 3+ blank lines into 2, trim trailing spaces
+  const normalized = text.replace(/[ \t]+$/gm, "").replace(/(\r?\n){4,}/g, "\n\n\n");
+  const lines = normalized.split(/\r?\n/);
 
   // Try Q:/A:/Question:/Answer: format first
   const qLineCount = lines.filter((l) => Q_MARKER.test(l)).length;
@@ -217,8 +232,12 @@ export async function parseDocument(
   // Send to Claude API for parsing
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
+    // Give a more helpful error: show what the parser saw
+    const lineCount = text.split(/\r?\n/).length;
+    const preview = text.slice(0, 200).replace(/\n/g, " ").trim();
     throw new Error(
-      "ANTHROPIC_API_KEY is not configured. Please set it in your environment variables."
+      `Could not detect Q/A structure in this document (${lineCount} lines, preview: "${preview}..."). ` +
+      `To use AI parsing, set the ANTHROPIC_API_KEY environment variable.`
     );
   }
 

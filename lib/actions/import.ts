@@ -8,7 +8,7 @@ import {
   type DraftQuestion,
 } from "@/lib/server/document-parser";
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt"];
 
 function getExtension(filename: string): string {
@@ -27,7 +27,7 @@ export async function parseDocument(
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    return { error: "File size exceeds 20MB limit." };
+    return { error: "File size exceeds 100MB limit." };
   }
 
   const ext = getExtension(file.name);

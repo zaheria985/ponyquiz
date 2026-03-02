@@ -37,9 +37,9 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
         return;
       }
 
-      // Validate file size (20MB)
-      if (file.size > 20 * 1024 * 1024) {
-        setError("File size exceeds 20MB limit.");
+      // Validate file size (100MB)
+      if (file.size > 100 * 1024 * 1024) {
+        setError("File size exceeds 100MB limit.");
         return;
       }
 
@@ -271,7 +271,7 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
             Drag and drop a document here
           </p>
           <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-            Supports PDF, DOC, DOCX, and TXT files (up to 20MB)
+            Supports PDF, DOC, DOCX, and TXT files (up to 100MB)
           </p>
           <button
             onClick={() => fileInputRef.current?.click()}
