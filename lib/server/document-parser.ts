@@ -79,11 +79,24 @@ If the document doesn't contain any identifiable questions or educational conten
  * 2. Numbered questions ending with ? followed by answer lines
  * Returns DraftQuestion[] if pattern detected, null otherwise (falls back to AI).
  */
+// Matches Q:, Question:, q:, question: etc.
+const Q_MARKER = /^\s*(q|question)\s*:/i;
+// Matches A:, Answer:, a:, answer: etc.
+const A_MARKER = /^\s*(a|answer)\s*:/i;
+
+function stripQMarker(line: string): string {
+  return line.replace(/^\s*(q|question)\s*:\s*/i, "").trim();
+}
+
+function stripAMarker(line: string): string {
+  return line.replace(/^\s*(a|answer)\s*:\s*/i, "").trim();
+}
+
 function tryParseQAPairs(text: string): DraftQuestion[] | null {
   const lines = text.split(/\r?\n/);
 
-  // Try Q:/A: format first
-  const qLineCount = lines.filter((l) => /^\s*q:/i.test(l)).length;
+  // Try Q:/A:/Question:/Answer: format first
+  const qLineCount = lines.filter((l) => Q_MARKER.test(l)).length;
   if (qLineCount >= 2) {
     return parseQAMarkers(lines);
   }
@@ -106,7 +119,7 @@ function parseQAMarkers(lines: string[]): DraftQuestion[] | null {
   let collectingA = false;
 
   for (const line of lines) {
-    if (/^\s*q:/i.test(line)) {
+    if (Q_MARKER.test(line)) {
       if (currentQ) {
         questions.push({
           text: currentQ,
@@ -115,11 +128,11 @@ function parseQAMarkers(lines: string[]): DraftQuestion[] | null {
           difficulty: "beginner",
         });
       }
-      currentQ = line.replace(/^\s*q:\s*/i, "").trim();
+      currentQ = stripQMarker(line);
       currentA = "";
       collectingA = false;
-    } else if (/^\s*a:/i.test(line)) {
-      currentA = line.replace(/^\s*a:\s*/i, "").trim();
+    } else if (A_MARKER.test(line)) {
+      currentA = stripAMarker(line);
       collectingA = true;
     } else if (collectingA && line.trim()) {
       currentA += " " + line.trim();
@@ -161,8 +174,13 @@ function parseNumberedQuestions(lines: string[]): DraftQuestion[] | null {
       currentA = "";
     } else if (currentQ && line.trim()) {
       // Non-numbered, non-empty line = answer content
+      let cleaned = line.trim();
+      // Strip Answer:/A: prefix
+      if (A_MARKER.test(cleaned)) {
+        cleaned = stripAMarker(cleaned);
+      }
       // Strip leading emoji/star markers (⭐★✦✧●•◆▸►etc)
-      const cleaned = line.trim().replace(/^[\u2B50\u2605\u2606\u2726\u2727\u2728\u25CF\u2022\u25C6\u25B8\u25BA\uFE0F\u200D*\-•]+\s*/, "");
+      cleaned = cleaned.replace(/^[\u2B50\u2605\u2606\u2726\u2727\u2728\u25CF\u2022\u25C6\u25B8\u25BA\uFE0F\u200D*\-•]+\s*/, "");
       currentA += (currentA ? " " : "") + cleaned;
     }
   }
