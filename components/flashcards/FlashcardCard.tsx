@@ -47,16 +47,16 @@ export default function FlashcardCard({
         style={{
           transformStyle: "preserve-3d",
           transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-          minHeight: "280px",
         }}
       >
-        {/* Front */}
+        {/* Front — relative so it drives the container height */}
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center rounded-xl border-2 p-8"
+          className="relative flex flex-col items-center justify-center rounded-xl border-2 p-8"
           style={{
             backfaceVisibility: "hidden",
             backgroundColor: "var(--surface)",
             borderColor: "var(--interactive-border)",
+            minHeight: "280px",
           }}
         >
           <div
@@ -72,12 +72,12 @@ export default function FlashcardCard({
 
           {type === "labeled_diagram" && imagePath && activeHotspot ? (
             <div className="w-full mb-3">
-              <div className="relative w-full rounded-lg overflow-hidden">
+              <div className="relative w-full max-h-[70vh] rounded-lg overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePath}
                   alt={imageAlt || "Diagram"}
-                  className="w-full block"
+                  className="w-full max-h-[70vh] object-contain block"
                 />
                 {/* Highlight the active hotspot with an arrow marker */}
                 <div
@@ -101,13 +101,13 @@ export default function FlashcardCard({
                 What is this part?
               </p>
             </div>
-          ) : type === "flashcard_image" && imagePath ? (
-            <div className="mb-4">
+          ) : (type === "flashcard_image" || type === "flashcard_term") && imagePath ? (
+            <div className="mb-4 w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imagePath}
                 alt={imageAlt || "Flashcard image"}
-                className="max-h-36 rounded-lg object-contain"
+                className="w-full max-h-[60vh] rounded-lg object-contain"
               />
             </div>
           ) : null}
@@ -129,7 +129,7 @@ export default function FlashcardCard({
           </div>
         </div>
 
-        {/* Back */}
+        {/* Back — absolute, overlays the front */}
         <div
           className="absolute inset-0 flex flex-col items-center justify-center rounded-xl border-2 p-8"
           style={{
@@ -152,12 +152,12 @@ export default function FlashcardCard({
 
           {type === "labeled_diagram" && imagePath && activeHotspot ? (
             <div className="w-full mb-3">
-              <div className="relative w-full rounded-lg overflow-hidden">
+              <div className="relative w-full max-h-[70vh] rounded-lg overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={imagePath}
                   alt={imageAlt || "Diagram"}
-                  className="w-full block"
+                  className="w-full max-h-[70vh] object-contain block"
                 />
                 <div
                   className="absolute px-2 py-1 rounded-md text-xs font-bold -translate-x-1/2 -translate-y-1/2 whitespace-nowrap"
@@ -174,13 +174,13 @@ export default function FlashcardCard({
                 </div>
               </div>
             </div>
-          ) : type === "flashcard_term" && imagePath ? (
-            <div className="mb-4">
+          ) : (type === "flashcard_term" || type === "flashcard_image") && imagePath ? (
+            <div className="mb-4 w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imagePath}
                 alt={imageAlt || "Flashcard image"}
-                className="max-h-36 rounded-lg object-contain"
+                className="w-full max-h-[60vh] rounded-lg object-contain"
               />
             </div>
           ) : null}
