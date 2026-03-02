@@ -136,13 +136,25 @@ function parseDifficulty(raw: string): "beginner" | "intermediate" | "advanced" 
 
 function tryParseQAPairs(text: string): DraftQuestion[] | null {
   // Normalize whitespace: collapse runs of 3+ blank lines into 2, trim trailing spaces
-  const normalized = text.replace(/[ \t]+$/gm, "").replace(/(\r?\n){4,}/g, "\n\n\n");
+  let normalized = text.replace(/[ \t]+$/gm, "").replace(/(\r?\n){4,}/g, "\n\n\n");
+
+  // Insert line breaks before known markers so they're on separate lines.
+  // .docx extraction often puts Q: A: T: S: L: on the same line/paragraph.
+  normalized = normalized.replace(
+    /(?<=\S[ \t]+)\b(Q|A|T|S|L|Question|Answer|Topic|Source|Level|Difficulty|Page|Ref)\s*:/gi,
+    "\n$1:"
+  );
+
   const lines = normalized.split(/\r?\n/);
 
   // Try Q:/A:/Question:/Answer: format first
   const qLineCount = lines.filter((l) => Q_MARKER.test(l)).length;
   if (qLineCount >= 2) {
-    return parseQAMarkers(lines);
+    const result = parseQAMarkers(lines);
+    if (result) {
+      console.log(`[Q/A Parser] Parsed ${result.length} questions. First:`, JSON.stringify(result[0]));
+    }
+    return result;
   }
 
   // Try numbered question format: "1. Question text" or "1) Question text"

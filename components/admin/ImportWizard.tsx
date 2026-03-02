@@ -19,7 +19,6 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [questions, setQuestions] = useState<DraftQuestionData[]>([]);
   const [dragOver, setDragOver] = useState(false);
-  const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [, startParsingTransition] = useTransition();
   const [isSaving, startSavingTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -60,9 +59,9 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
 
         // Map results to editable DraftQuestionData
         const mapped: DraftQuestionData[] = result.data.map((q) => {
-          // Use pre-selected topic if set, otherwise try matching AI-suggested name
-          let topicId = selectedTopicId;
-          if (!topicId && q.topic) {
+          // Try matching parsed topic name to an existing topic
+          let topicId = "";
+          if (q.topic) {
             const match = topics.find(
               (t) =>
                 t.name.toLowerCase() === q.topic?.toLowerCase() ||
@@ -91,7 +90,7 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
         setStep("review");
       });
     },
-    [topics, selectedTopicId]
+    [topics]
   );
 
   function handleDrop(e: React.DragEvent) {
@@ -235,39 +234,6 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
       {/* Step 1: Upload */}
       {step === "upload" && (
         <div className="space-y-4">
-          {/* Topic selector */}
-          <div
-            className="rounded-lg border p-4"
-            style={{
-              backgroundColor: "var(--surface)",
-              borderColor: "var(--border-light)",
-            }}
-          >
-            <label
-              className="block text-sm font-medium mb-2"
-              style={{ color: "var(--text-secondary)" }}
-            >
-              Assign all questions to topic
-            </label>
-            <select
-              value={selectedTopicId}
-              onChange={(e) => setSelectedTopicId(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border text-sm outline-none"
-              style={{
-                backgroundColor: "var(--input-bg)",
-                borderColor: "var(--input-border)",
-                color: "var(--input-text)",
-              }}
-            >
-              <option value="">No topic (assign individually later)</option>
-              {topics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Drop zone */}
           <div
             className="rounded-lg border-2 border-dashed p-10 text-center transition-colors"

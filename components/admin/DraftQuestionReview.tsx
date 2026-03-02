@@ -131,10 +131,13 @@ export default function DraftQuestionReview({
         )}
         {question.topic && !question.topic_id && (
           <span
-            className="text-xs italic"
-            style={{ color: "var(--text-muted)" }}
+            className="text-xs font-medium px-2 py-0.5 rounded-full"
+            style={{
+              backgroundColor: "var(--interactive-light)",
+              color: "var(--interactive)",
+            }}
           >
-            AI suggested: &quot;{question.topic}&quot;
+            New topic: {question.topic}
           </span>
         )}
       </div>
@@ -237,23 +240,21 @@ export default function DraftQuestionReview({
       </div>
 
       {/* Page reference */}
-      {question.pageReference && (
-        <div>
-          <label className="block text-xs font-medium mb-1" style={labelStyle}>
-            Page Reference
-          </label>
-          <input
-            type="text"
-            value={question.pageReference || ""}
-            onChange={(e) => update({ pageReference: e.target.value })}
-            className="w-full sm:w-48 px-3 py-2 rounded-lg border text-sm outline-none"
-            style={inputStyle}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
-            placeholder="e.g. p. 42"
-          />
-        </div>
-      )}
+      <div>
+        <label className="block text-xs font-medium mb-1" style={labelStyle}>
+          Source / Page Reference
+        </label>
+        <input
+          type="text"
+          value={question.pageReference || ""}
+          onChange={(e) => update({ pageReference: e.target.value })}
+          className="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+          style={inputStyle}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          placeholder="e.g. USPC Manual p. 42"
+        />
+      </div>
 
       {/* Type-specific answer fields */}
       {question.type === "multiple_choice" && (
