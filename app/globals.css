@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* App background & text */
+  --app-bg: #faf8f5;
+  --app-text: #3d2e1f;
+
+  /* Surfaces */
+  --surface: #ffffff;
+  --surface-muted: #f5f0eb;
+  --surface-subtle: #faf7f3;
+
+  /* Text hierarchy */
+  --text-primary: #3d2e1f;
+  --text-secondary: #5c4a38;
+  --text-tertiary: #7d6b58;
+  --text-muted: #a39484;
+
+  /* Borders */
+  --border: #d9cfc3;
+  --border-light: #e8e0d6;
+
+  /* Interactive (purple-blue accents) */
+  --interactive: #7c5cbf;
+  --interactive-hover: #6a4aab;
+  --interactive-light: #f0ebf8;
+  --interactive-medium: #d4c6ee;
+  --interactive-border: #b8a3df;
+
+  /* Inputs */
+  --input-bg: #ffffff;
+  --input-border: #d9cfc3;
+  --input-text: #3d2e1f;
+  --input-placeholder: #a39484;
+  --input-focus-ring: #7c5cbf;
+
+  /* Success (soft green) */
+  --success-bg: #edf7ed;
+  --success-text: #2e6b2e;
+  --success-solid: #4caf50;
+  --success-border: #a5d6a5;
+
+  /* Warning (warm amber) */
+  --warning-bg: #fff8e6;
+  --warning-text: #8a6914;
+  --warning-solid: #f5a623;
+  --warning-border: #f5d78e;
+
+  /* Error */
+  --error-bg: #fdf0ef;
+  --error-text: #b33a2a;
+  --error-border: #f0b0a5;
+
+  /* Overlay */
+  --overlay: rgba(61, 46, 31, 0.5);
+
+  /* Brand */
+  --brand: #7c5cbf;
+  --brand-contrast: #ffffff;
+
+  /* Sidebar */
+  --sidebar-bg: #f0ebe4;
+  --sidebar-text: #5c4a38;
+  --sidebar-hover: #e6ddd2;
+  --sidebar-active-bg: #7c5cbf;
+  --sidebar-active-text: #ffffff;
+
+  /* Radius & Shadow */
+  --radius-card: 0.75rem;
+  --shadow-color: rgba(61, 46, 31, 0.08);
+}
+
+[data-theme="dark"] {
+  /* App background & text */
+  --app-bg: #1a1512;
+  --app-text: #e8e0d6;
+
+  /* Surfaces */
+  --surface: #2a2320;
+  --surface-muted: #231d1a;
+  --surface-subtle: #322a26;
+
+  /* Text hierarchy */
+  --text-primary: #e8e0d6;
+  --text-secondary: #c4b8aa;
+  --text-tertiary: #9a8c7e;
+  --text-muted: #6e6058;
+
+  /* Borders */
+  --border: #4a3f38;
+  --border-light: #3d3530;
+
+  /* Interactive (lighter purple for dark mode) */
+  --interactive: #a68edf;
+  --interactive-hover: #b9a5e8;
+  --interactive-light: #2d2540;
+  --interactive-medium: #3d3055;
+  --interactive-border: #5c4a80;
+
+  /* Inputs */
+  --input-bg: #2a2320;
+  --input-border: #4a3f38;
+  --input-text: #e8e0d6;
+  --input-placeholder: #6e6058;
+  --input-focus-ring: #a68edf;
+
+  /* Success */
+  --success-bg: #1a2e1a;
+  --success-text: #81c784;
+  --success-solid: #4caf50;
+  --success-border: #2e5a2e;
+
+  /* Warning */
+  --warning-bg: #2e2510;
+  --warning-text: #f5d78e;
+  --warning-solid: #f5a623;
+  --warning-border: #5a4520;
+
+  /* Error */
+  --error-bg: #2e1a18;
+  --error-text: #ef9a9a;
+  --error-border: #5a2a25;
+
+  /* Overlay */
+  --overlay: rgba(0, 0, 0, 0.65);
+
+  /* Brand */
+  --brand: #a68edf;
+  --brand-contrast: #1a1512;
+
+  /* Sidebar */
+  --sidebar-bg: #231d1a;
+  --sidebar-text: #c4b8aa;
+  --sidebar-hover: #322a26;
+  --sidebar-active-bg: #a68edf;
+  --sidebar-active-text: #1a1512;
+
+  /* Radius & Shadow */
+  --radius-card: 0.75rem;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+body {
+  background-color: var(--app-bg);
+  color: var(--app-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  border-color: var(--border);
+}
