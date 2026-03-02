@@ -35,9 +35,13 @@ export async function registerStudent(formData: FormData): Promise<{ success: tr
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
+  // First user becomes admin automatically
+  const userCount = await pool.query("SELECT COUNT(*)::int AS count FROM users");
+  const role = userCount.rows[0].count === 0 ? "admin" : "student";
+
   await pool.query(
-    "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, 'student')",
-    [name, email, hashedPassword]
+    "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
+    [name, email, hashedPassword, role]
   );
 
   return { success: true as const };
