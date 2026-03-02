@@ -34,7 +34,6 @@ const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 function getDayLabelsForWeek(): string[] {
   const today = new Date();
-  const dayOfWeek = today.getDay();
   const labels: string[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
