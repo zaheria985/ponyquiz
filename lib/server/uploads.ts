@@ -53,8 +53,9 @@ export async function saveUploadedFile(
     await writeFile(absolutePath, buffer);
 
     return { path: relativePath };
-  } catch {
-    return { error: "Failed to save file to disk." };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { error: `Failed to save file to disk: ${msg}` };
   }
 }
 
