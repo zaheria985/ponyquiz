@@ -37,6 +37,7 @@ export default function FlashcardViewer({
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  const [animating, setAnimating] = useState(true);
   const [loading, setLoading] = useState(true);
   const [answered, setAnswered] = useState(false);
   const [results, setResults] = useState<{ got_it: number; still_learning: number }>({
@@ -107,9 +108,18 @@ export default function FlashcardViewer({
     if (currentIndex + 1 >= total) {
       setFinished(true);
     } else {
+      // Disable flip animation so the new card appears instantly without
+      // the back face (answer) flashing during a CSS rotation.
+      setAnimating(false);
       setCurrentIndex((prev) => prev + 1);
       setFlipped(false);
       setAnswered(false);
+      // Re-enable after the browser paints the new card in its unflipped state.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimating(true);
+        });
+      });
     }
   }
 
@@ -292,6 +302,7 @@ export default function FlashcardViewer({
           imageAlt={currentCard.image_alt}
           hotspots={currentCard.hotspots}
           flipped={flipped}
+          animate={animating}
           onFlip={handleFlip}
         />
       )}

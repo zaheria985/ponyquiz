@@ -8,6 +8,7 @@ interface FlashcardCardProps {
   imageAlt?: string | null;
   hotspots?: { x: number; y: number; label: string }[] | null;
   flipped: boolean;
+  animate: boolean;
   onFlip: () => void;
 }
 
@@ -19,6 +20,7 @@ export default function FlashcardCard({
   imageAlt,
   hotspots,
   flipped,
+  animate,
   onFlip,
 }: FlashcardCardProps) {
   // For labeled_diagram: find the hotspot that matches this question's answer
@@ -41,7 +43,7 @@ export default function FlashcardCard({
       }}
     >
       <div
-        className="relative w-full transition-transform duration-[600ms]"
+        className={`relative w-full ${animate ? "transition-transform duration-[600ms]" : ""}`}
         style={{
           transformStyle: "preserve-3d",
           transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
