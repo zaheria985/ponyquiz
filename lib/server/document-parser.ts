@@ -69,6 +69,60 @@ Respond ONLY with a JSON array of question objects. Do not include any other tex
 
 If the document doesn't contain any identifiable questions or educational content, return an empty array: []`;
 
+/**
+ * Attempt to parse text that is already formatted as Q:/A: pairs.
+ * Returns DraftQuestion[] if 2+ Q: lines are found, otherwise null (fall back to AI).
+ */
+function tryParseQAPairs(text: string): DraftQuestion[] | null {
+  const lines = text.split(/\r?\n/);
+  const qLineCount = lines.filter((l) => /^\s*q:/i.test(l)).length;
+  if (qLineCount < 2) return null;
+
+  // Walk through lines collecting Q/A pairs
+  const questions: DraftQuestion[] = [];
+  let currentQ = "";
+  let currentA = "";
+  let collectingA = false;
+
+  for (const line of lines) {
+    if (/^\s*q:/i.test(line)) {
+      // Flush previous pair
+      if (currentQ) {
+        questions.push({
+          text: currentQ,
+          type: "flashcard_qa",
+          answer: currentA.trim(),
+          difficulty: "beginner",
+        });
+      }
+      currentQ = line.replace(/^\s*q:\s*/i, "").trim();
+      currentA = "";
+      collectingA = false;
+    } else if (/^\s*a:/i.test(line)) {
+      currentA = line.replace(/^\s*a:\s*/i, "").trim();
+      collectingA = true;
+    } else if (collectingA && line.trim()) {
+      // Continuation line for multi-line answer
+      currentA += " " + line.trim();
+    } else if (!collectingA && currentQ && line.trim()) {
+      // Continuation line for multi-line question
+      currentQ += " " + line.trim();
+    }
+  }
+
+  // Flush last pair
+  if (currentQ) {
+    questions.push({
+      text: currentQ,
+      type: "flashcard_qa",
+      answer: currentA.trim(),
+      difficulty: "beginner",
+    });
+  }
+
+  return questions.length >= 2 ? questions : null;
+}
+
 export async function parseDocument(
   buffer: Buffer,
   filename: string
@@ -78,6 +132,12 @@ export async function parseDocument(
 
   if (!text || text.trim().length === 0) {
     throw new Error("The document appears to be empty or could not be read.");
+  }
+
+  // Try plain-text Q/A parsing first — no API key needed
+  const qaParsed = tryParseQAPairs(text);
+  if (qaParsed) {
+    return qaParsed;
   }
 
   // Send to Claude API for parsing

@@ -77,3 +77,37 @@ export async function getQuestionCount(): Promise<number> {
   const res = await pool.query("SELECT COUNT(*) FROM questions");
   return parseInt(res.rows[0].count, 10);
 }
+
+export interface DuplicateGroup {
+  normalizedText: string;
+  questions: { id: string; text: string; created_at: string; topic_name: string | null }[];
+}
+
+export async function getDuplicateQuestions(): Promise<DuplicateGroup[]> {
+  const res = await pool.query(
+    `SELECT q.id, q.text, q.created_at, t.name as topic_name,
+            LOWER(TRIM(q.text)) as normalized
+     FROM questions q
+     LEFT JOIN topics t ON q.topic_id = t.id
+     WHERE LOWER(TRIM(q.text)) IN (
+       SELECT LOWER(TRIM(text)) FROM questions GROUP BY LOWER(TRIM(text)) HAVING COUNT(*) > 1
+     )
+     ORDER BY LOWER(TRIM(q.text)), q.created_at ASC`
+  );
+
+  const groups = new Map<string, DuplicateGroup>();
+  for (const row of res.rows) {
+    const key = row.normalized as string;
+    if (!groups.has(key)) {
+      groups.set(key, { normalizedText: key, questions: [] });
+    }
+    groups.get(key)!.questions.push({
+      id: row.id,
+      text: row.text,
+      created_at: row.created_at,
+      topic_name: row.topic_name,
+    });
+  }
+
+  return Array.from(groups.values());
+}

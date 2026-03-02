@@ -198,6 +198,62 @@ export async function deleteQuestion(
   return { success: true };
 }
 
+export async function deleteDuplicateQuestions(
+  formData: FormData
+): Promise<{ success: true; data: { count: number } } | { error: string }> {
+  let ids: string[];
+  try {
+    ids = JSON.parse(formData.get("ids") as string);
+  } catch {
+    return { error: "Invalid question IDs." };
+  }
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return { error: "No questions selected for deletion." };
+  }
+
+  // Validate all IDs are UUIDs
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  for (const id of ids) {
+    if (typeof id !== "string" || !uuidRegex.test(id)) {
+      return { error: "Invalid question ID format." };
+    }
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Build parameterized placeholders: $1, $2, ...
+    const placeholders = ids.map((_, i) => `$${i + 1}`).join(", ");
+
+    // Delete FK references first
+    await client.query(
+      `DELETE FROM quiz_answers WHERE question_id IN (${placeholders})`,
+      ids
+    );
+    await client.query(
+      `DELETE FROM flashcard_progress WHERE question_id IN (${placeholders})`,
+      ids
+    );
+
+    const res = await client.query(
+      `DELETE FROM questions WHERE id IN (${placeholders})`,
+      ids
+    );
+
+    await client.query("COMMIT");
+
+    revalidatePath("/admin/questions");
+    return { success: true, data: { count: res.rowCount ?? 0 } };
+  } catch {
+    await client.query("ROLLBACK");
+    return { error: "Failed to delete duplicate questions." };
+  } finally {
+    client.release();
+  }
+}
+
 export async function toggleQuestionActive(
   formData: FormData
 ): Promise<{ success: true } | { error: string }> {

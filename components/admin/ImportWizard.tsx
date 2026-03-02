@@ -319,7 +319,7 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
             className="text-base font-medium mb-1"
             style={{ color: "var(--text-primary)" }}
           >
-            Analyzing document with AI...
+            Analyzing document...
           </p>
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>
             This may take a moment depending on the document size.
