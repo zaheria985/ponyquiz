@@ -32,4 +32,6 @@ services:
 
 volumes:
   pgdata:
+    driver: local
   uploads:
+    driver: local
