@@ -32,8 +32,8 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
       const ext = file.name.lastIndexOf(".") >= 0
         ? file.name.slice(file.name.lastIndexOf(".")).toLowerCase()
         : "";
-      if (![".pdf", ".doc", ".docx"].includes(ext)) {
-        setError("Unsupported file type. Please upload a PDF or Word document.");
+      if (![".pdf", ".doc", ".docx", ".txt"].includes(ext)) {
+        setError("Unsupported file type. Please upload a PDF, Word document, or text file.");
         return;
       }
 
@@ -271,7 +271,7 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
             Drag and drop a document here
           </p>
           <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-            Supports PDF, DOC, and DOCX files (up to 20MB)
+            Supports PDF, DOC, DOCX, and TXT files (up to 20MB)
           </p>
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -293,7 +293,7 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.doc,.docx,.txt"
             onChange={handleFileInput}
             className="hidden"
           />

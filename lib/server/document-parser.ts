@@ -15,7 +15,7 @@ export interface DraftQuestion {
   explanation?: string;
 }
 
-const SUPPORTED_EXTENSIONS = [".pdf", ".doc", ".docx"];
+const SUPPORTED_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt"];
 
 function getExtension(filename: string): string {
   const idx = filename.lastIndexOf(".");
@@ -31,8 +31,12 @@ async function extractText(
 
   if (!SUPPORTED_EXTENSIONS.includes(ext)) {
     throw new Error(
-      `Unsupported file type "${ext}". Supported: PDF, DOC, DOCX.`
+      `Unsupported file type "${ext}". Supported: PDF, DOC, DOCX, TXT.`
     );
+  }
+
+  if (ext === ".txt") {
+    return buffer.toString("utf-8");
   }
 
   if (ext === ".pdf") {

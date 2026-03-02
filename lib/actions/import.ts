@@ -9,7 +9,7 @@ import {
 } from "@/lib/server/document-parser";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx"];
+const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt"];
 
 function getExtension(filename: string): string {
   const idx = filename.lastIndexOf(".");
@@ -33,7 +33,7 @@ export async function parseDocument(
   const ext = getExtension(file.name);
   if (!ALLOWED_EXTENSIONS.includes(ext)) {
     return {
-      error: `Unsupported file type "${ext}". Supported: PDF, DOC, DOCX.`,
+      error: `Unsupported file type "${ext}". Supported: PDF, DOC, DOCX, TXT.`,
     };
   }
 
