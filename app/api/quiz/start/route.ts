@@ -60,21 +60,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Strip correct answers from questions sent to client
-    const clientQuestions = questions.map((q) => ({
-      id: q.id,
-      text: q.text,
-      type: q.type,
-      topic_id: q.topic_id,
-      topic_name: q.topic_name,
-      difficulty: q.difficulty,
-      options: q.options
-        ? q.options.map((opt: { text: string }) => ({ text: opt.text }))
-        : null,
-      image_id: q.image_id,
-      image_path: q.image_path,
-      image_alt: q.image_alt,
-      hotspots: q.hotspots,
-    }));
+    const clientQuestions = questions.map((q) => {
+      // For labeled_diagram: only send the active hotspot coordinates (no label),
+      // and use a generic question text so the answer isn't revealed.
+      let activeHotspot: { x: number; y: number } | null = null;
+      let text = q.text;
+      if (q.type === "labeled_diagram" && q.answer && Array.isArray(q.hotspots)) {
+        const match = (q.hotspots as { x: number; y: number; label: string }[])
+          .find((h) => h.label === q.answer);
+        if (match) {
+          activeHotspot = { x: match.x, y: match.y };
+        }
+        text = "What is this part?";
+      }
+
+      return {
+        id: q.id,
+        text,
+        type: q.type,
+        topic_id: q.topic_id,
+        topic_name: q.topic_name,
+        difficulty: q.difficulty,
+        options: q.options
+          ? q.options.map((opt: { text: string }) => ({ text: opt.text }))
+          : null,
+        image_id: q.image_id,
+        image_path: q.image_path,
+        image_alt: q.image_alt,
+        activeHotspot,
+      };
+    });
 
     return NextResponse.json({
       attemptId: attemptResult.data.attemptId,

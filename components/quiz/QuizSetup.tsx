@@ -19,7 +19,7 @@ interface QuizQuestionClient {
   options: { text: string }[] | null;
   image_path: string | null;
   image_alt: string | null;
-  hotspots: unknown[] | null;
+  activeHotspot: { x: number; y: number } | null;
 }
 
 interface QuizSetupProps {

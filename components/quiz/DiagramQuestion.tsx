@@ -2,17 +2,11 @@
 
 import { useState } from "react";
 
-interface Hotspot {
-  x: number;
-  y: number;
-  label: string;
-}
-
 interface DiagramQuestionProps {
   text: string;
   imagePath: string | null;
   imageAlt: string | null;
-  hotspots: Hotspot[] | null;
+  activeHotspot: { x: number; y: number } | null;
   options: { text: string }[] | null;
   onAnswer: (answer: string) => void;
   disabled: boolean;
@@ -24,7 +18,7 @@ export default function DiagramQuestion({
   text,
   imagePath,
   imageAlt,
-  hotspots,
+  activeHotspot,
   options,
   onAnswer,
   disabled,
@@ -63,23 +57,19 @@ export default function DiagramQuestion({
               className="w-full max-h-80 object-contain"
               style={{ backgroundColor: "var(--surface-muted)" }}
             />
-            {hotspots && hotspots.length > 0 && (
-              <div className="absolute inset-0">
-                {hotspots.map((spot, i) => (
-                  <div
-                    key={i}
-                    className="absolute w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{
-                      left: `${spot.x}%`,
-                      top: `${spot.y}%`,
-                      transform: "translate(-50%, -50%)",
-                      backgroundColor: "var(--interactive)",
-                      color: "var(--brand-contrast)",
-                    }}
-                  >
-                    {i + 1}
-                  </div>
-                ))}
+            {activeHotspot && (
+              <div
+                className="absolute w-7 h-7 rounded-full border-3 flex items-center justify-center text-sm font-bold -translate-x-1/2 -translate-y-1/2 animate-pulse"
+                style={{
+                  left: `${activeHotspot.x}%`,
+                  top: `${activeHotspot.y}%`,
+                  backgroundColor: "var(--error-text)",
+                  borderColor: "#fff",
+                  color: "#fff",
+                  boxShadow: "0 0 0 3px var(--error-text), 0 2px 8px rgba(0,0,0,0.3)",
+                }}
+              >
+                ?
               </div>
             )}
           </div>
@@ -155,23 +145,19 @@ export default function DiagramQuestion({
             className="w-full max-h-80 object-contain"
             style={{ backgroundColor: "var(--surface-muted)" }}
           />
-          {hotspots && hotspots.length > 0 && (
-            <div className="absolute inset-0">
-              {hotspots.map((spot, i) => (
-                <div
-                  key={i}
-                  className="absolute w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                  style={{
-                    left: `${spot.x}%`,
-                    top: `${spot.y}%`,
-                    transform: "translate(-50%, -50%)",
-                    backgroundColor: "var(--interactive)",
-                    color: "var(--brand-contrast)",
-                  }}
-                >
-                  {i + 1}
-                </div>
-              ))}
+          {activeHotspot && (
+            <div
+              className="absolute w-7 h-7 rounded-full border-3 flex items-center justify-center text-sm font-bold -translate-x-1/2 -translate-y-1/2 animate-pulse"
+              style={{
+                left: `${activeHotspot.x}%`,
+                top: `${activeHotspot.y}%`,
+                backgroundColor: "var(--error-text)",
+                borderColor: "#fff",
+                color: "#fff",
+                boxShadow: "0 0 0 3px var(--error-text), 0 2px 8px rgba(0,0,0,0.3)",
+              }}
+            >
+              ?
             </div>
           )}
         </div>

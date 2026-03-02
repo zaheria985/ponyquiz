@@ -16,7 +16,7 @@ interface QuizQuestionClient {
   options: { text: string }[] | null;
   image_path: string | null;
   image_alt: string | null;
-  hotspots: unknown[] | null;
+  activeHotspot: { x: number; y: number } | null;
 }
 
 interface FeedbackData {
@@ -155,7 +155,7 @@ export default function QuestionRenderer({
             text={question.text}
             imagePath={question.image_path}
             imageAlt={question.image_alt}
-            hotspots={question.hotspots as { x: number; y: number; label: string }[] | null}
+            activeHotspot={question.activeHotspot}
             options={question.options}
             onAnswer={handleAnswer}
             disabled={isAnswered}
