@@ -112,20 +112,30 @@ export async function parseDocument(
     throw new Error("AI returned an empty response.");
   }
 
-  // Parse the JSON response
+  // Parse the JSON response — Claude sometimes wraps JSON in text or code fences
   let parsed: unknown;
   try {
-    // Try to extract JSON from the response (handle potential markdown wrapping)
-    let jsonStr = responseText.trim();
-    if (jsonStr.startsWith("```")) {
-      const lines = jsonStr.split("\n");
-      lines.shift(); // remove opening ```json or ```
-      if (lines[lines.length - 1]?.trim() === "```") {
-        lines.pop();
+    const text = responseText.trim();
+
+    // Strategy 1: try direct parse
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      // Strategy 2: extract from markdown code fence
+      const fenceMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
+      if (fenceMatch) {
+        parsed = JSON.parse(fenceMatch[1].trim());
+      } else {
+        // Strategy 3: find the first [ ... ] in the response
+        const bracketStart = text.indexOf("[");
+        const bracketEnd = text.lastIndexOf("]");
+        if (bracketStart !== -1 && bracketEnd > bracketStart) {
+          parsed = JSON.parse(text.slice(bracketStart, bracketEnd + 1));
+        } else {
+          throw new Error("No JSON array found");
+        }
       }
-      jsonStr = lines.join("\n");
     }
-    parsed = JSON.parse(jsonStr);
   } catch {
     throw new Error(
       "Failed to parse AI response as JSON. The document may be too complex."
