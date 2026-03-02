@@ -118,6 +118,10 @@ export async function saveDraftQuestions(
     validQuestions.push(parsed.data);
   }
 
+  // Log what we're about to save for debugging
+  const topicNames = validQuestions.map((q) => q.topic_name).filter(Boolean);
+  console.log(`[Import] Saving ${validQuestions.length} questions. Topics found: [${topicNames.join(", ")}]`);
+
   // Bulk insert using parameterized SQL
   const client = await pool.connect();
   try {
@@ -138,6 +142,7 @@ export async function saveDraftQuestions(
       );
       if (existing.rowCount && existing.rowCount > 0) {
         topicNameToId.set(name.toLowerCase(), existing.rows[0].id);
+        console.log(`[Import] Topic "${name}" already exists (id: ${existing.rows[0].id})`);
       } else {
         // Create new topic
         const inserted = await client.query(
@@ -145,6 +150,7 @@ export async function saveDraftQuestions(
           [name]
         );
         topicNameToId.set(name.toLowerCase(), inserted.rows[0].id);
+        console.log(`[Import] Created topic "${name}" (id: ${inserted.rows[0].id})`);
       }
     }
 
@@ -188,9 +194,11 @@ export async function saveDraftQuestions(
     revalidatePath("/admin/import");
 
     return { success: true, data: { count: inserted } };
-  } catch {
+  } catch (err) {
     await client.query("ROLLBACK");
-    return { error: "Failed to save questions to database." };
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[Import] Save failed:", msg);
+    return { error: `Failed to save questions: ${msg}` };
   } finally {
     client.release();
   }

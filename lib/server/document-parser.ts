@@ -180,10 +180,32 @@ function parseQAMarkers(lines: string[]): DraftQuestion[] | null {
 
   function flush() {
     if (currentQ) {
+      // Fallback: extract inline T:/S:/L: markers from answer text if not parsed as lines
+      let answer = currentA.trim();
+      if (!currentTopic || !currentSource || !currentLevel) {
+        const inlineT = answer.match(/\s+\b(?:T|Topic)\s*:\s*(.+?)(?=\s+\b(?:S|Source|Page|Ref|L|Level|Difficulty)\s*:|$)/i);
+        const inlineS = answer.match(/\s+\b(?:S|Source|Page|Ref)\s*:\s*(.+?)(?=\s+\b(?:L|Level|Difficulty)\s*:|$)/i);
+        const inlineL = answer.match(/\s+\b(?:L|Level|Difficulty)\s*:\s*(.+?)$/i);
+        if (!currentTopic && inlineT) {
+          currentTopic = inlineT[1].trim();
+          answer = answer.slice(0, answer.indexOf(inlineT[0])).trim();
+        }
+        if (!currentSource && inlineS) {
+          currentSource = inlineS[1].trim();
+          const sIdx = answer.indexOf(inlineS[0]);
+          if (sIdx >= 0) answer = answer.slice(0, sIdx).trim();
+        }
+        if (!currentLevel && inlineL) {
+          currentLevel = inlineL[1].trim();
+          const lIdx = answer.indexOf(inlineL[0]);
+          if (lIdx >= 0) answer = answer.slice(0, lIdx).trim();
+        }
+      }
+
       const q: DraftQuestion = {
         text: currentQ,
         type: "flashcard_qa",
-        answer: currentA.trim(),
+        answer,
         difficulty: currentLevel ? parseDifficulty(currentLevel) : "beginner",
       };
       if (currentTopic) q.topic = currentTopic;
