@@ -27,7 +27,7 @@ export default function ImageQuestion({
 }: ImageQuestionProps) {
   const [textAnswer, setTextAnswer] = useState("");
 
-  function handleTextSubmit(e: React.FormEvent) {
+  function handleTextSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (textAnswer.trim()) {
       onAnswer(textAnswer.trim());

@@ -33,7 +33,7 @@ export default function DiagramQuestion({
 }: DiagramQuestionProps) {
   const [textAnswer, setTextAnswer] = useState("");
 
-  function handleTextSubmit(e: React.FormEvent) {
+  function handleTextSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (textAnswer.trim()) {
       onAnswer(textAnswer.trim());
