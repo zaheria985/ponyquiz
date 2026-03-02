@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -104,7 +104,23 @@ export default function Sidebar() {
             {session.user.name}
           </div>
         )}
-        <ThemeToggle />
+        <div className="flex items-center gap-2 px-3">
+          <ThemeToggle />
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            style={{ color: "var(--sidebar-text)" }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--sidebar-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+            }}
+          >
+            <LogoutIcon />
+            <span>Log out</span>
+          </button>
+        </div>
       </div>
     </aside>
   );
@@ -229,6 +245,16 @@ function BadgeIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 15l-3 5 1-4-3-1 3-5-1 4 3 1z" />
       <circle cx="12" cy="8" r="6" />
+    </svg>
+  );
+}
+
+function LogoutIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
   );
 }
