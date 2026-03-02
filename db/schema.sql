@@ -47,6 +47,7 @@ CREATE TABLE questions (
   options JSONB,
   answer TEXT,
   image_id UUID REFERENCES images(id),
+  page_reference VARCHAR(200),
   active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -11,6 +11,7 @@ export interface DraftQuestion {
   options?: { text: string; isCorrect: boolean }[];
   answer?: string;
   topic?: string;
+  pageReference?: string;
   difficulty?: "beginner" | "intermediate" | "advanced";
   explanation?: string;
 }
@@ -97,12 +98,40 @@ const Q_MARKER = /^\s*(q|question)\s*:/i;
 // Matches A:, Answer:, a:, answer: etc.
 const A_MARKER = /^\s*(a|answer)\s*:/i;
 
+// Matches T:, Topic:, topic: etc.
+const TOPIC_MARKER = /^\s*(t|topic)\s*:/i;
+// Matches S:, Source:, Page:, Page Reference:, Ref: etc.
+const SOURCE_MARKER = /^\s*(s|source|page|page\s*ref(?:erence)?|ref)\s*:/i;
+// Matches L:, Level:, Difficulty: etc.
+const LEVEL_MARKER = /^\s*(l|level|difficulty)\s*:/i;
+
 function stripQMarker(line: string): string {
   return line.replace(/^\s*(q|question)\s*:\s*/i, "").trim();
 }
 
 function stripAMarker(line: string): string {
   return line.replace(/^\s*(a|answer)\s*:\s*/i, "").trim();
+}
+
+function stripTopicMarker(line: string): string {
+  return line.replace(/^\s*(t|topic)\s*:\s*/i, "").trim();
+}
+
+function stripSourceMarker(line: string): string {
+  return line.replace(/^\s*(s|source|page|page\s*ref(?:erence)?|ref)\s*:\s*/i, "").trim();
+}
+
+function stripLevelMarker(line: string): string {
+  return line.replace(/^\s*(l|level|difficulty)\s*:\s*/i, "").trim();
+}
+
+/** Map letter grades (D/C/B/A) or level names to difficulty */
+function parseDifficulty(raw: string): "beginner" | "intermediate" | "advanced" {
+  const val = raw.trim().toLowerCase();
+  if (val === "d" || val === "beginner") return "beginner";
+  if (val === "c" || val === "intermediate") return "intermediate";
+  if (val === "b" || val === "a" || val === "advanced") return "advanced";
+  return "beginner";
 }
 
 function tryParseQAPairs(text: string): DraftQuestion[] | null {
@@ -131,40 +160,56 @@ function parseQAMarkers(lines: string[]): DraftQuestion[] | null {
   const questions: DraftQuestion[] = [];
   let currentQ = "";
   let currentA = "";
-  let collectingA = false;
+  let currentTopic = "";
+  let currentSource = "";
+  let currentLevel = "";
+  type Field = "q" | "a" | "topic" | "source" | "level";
+  let collecting: Field = "q";
 
-  for (const line of lines) {
-    if (Q_MARKER.test(line)) {
-      if (currentQ) {
-        questions.push({
-          text: currentQ,
-          type: "flashcard_qa",
-          answer: currentA.trim(),
-          difficulty: "beginner",
-        });
-      }
-      currentQ = stripQMarker(line);
-      currentA = "";
-      collectingA = false;
-    } else if (A_MARKER.test(line)) {
-      currentA = stripAMarker(line);
-      collectingA = true;
-    } else if (collectingA && line.trim()) {
-      currentA += " " + line.trim();
-    } else if (!collectingA && currentQ && line.trim()) {
-      currentQ += " " + line.trim();
+  function flush() {
+    if (currentQ) {
+      const q: DraftQuestion = {
+        text: currentQ,
+        type: "flashcard_qa",
+        answer: currentA.trim(),
+        difficulty: currentLevel ? parseDifficulty(currentLevel) : "beginner",
+      };
+      if (currentTopic) q.topic = currentTopic;
+      if (currentSource) q.pageReference = currentSource;
+      questions.push(q);
     }
   }
 
-  if (currentQ) {
-    questions.push({
-      text: currentQ,
-      type: "flashcard_qa",
-      answer: currentA.trim(),
-      difficulty: "beginner",
-    });
+  for (const line of lines) {
+    if (Q_MARKER.test(line)) {
+      flush();
+      currentQ = stripQMarker(line);
+      currentA = "";
+      currentTopic = "";
+      currentSource = "";
+      currentLevel = "";
+      collecting = "q";
+    } else if (A_MARKER.test(line)) {
+      currentA = stripAMarker(line);
+      collecting = "a";
+    } else if (TOPIC_MARKER.test(line)) {
+      currentTopic = stripTopicMarker(line);
+      collecting = "topic";
+    } else if (SOURCE_MARKER.test(line)) {
+      currentSource = stripSourceMarker(line);
+      collecting = "source";
+    } else if (LEVEL_MARKER.test(line)) {
+      currentLevel = stripLevelMarker(line);
+      collecting = "level";
+    } else if (line.trim()) {
+      // Continuation line — append to whatever field we're currently collecting
+      if (collecting === "a") currentA += " " + line.trim();
+      else if (collecting === "q" && currentQ) currentQ += " " + line.trim();
+      else if (collecting === "source") currentSource += " " + line.trim();
+    }
   }
 
+  flush();
   return questions.length >= 2 ? questions : null;
 }
 
@@ -172,21 +217,39 @@ function parseNumberedQuestions(lines: string[]): DraftQuestion[] | null {
   const questions: DraftQuestion[] = [];
   let currentQ = "";
   let currentA = "";
+  let currentTopic = "";
+  let currentSource = "";
+  let currentLevel = "";
+
+  function flush() {
+    if (currentQ) {
+      const q: DraftQuestion = {
+        text: currentQ,
+        type: "flashcard_qa",
+        answer: currentA.trim(),
+        difficulty: currentLevel ? parseDifficulty(currentLevel) : "beginner",
+      };
+      if (currentTopic) q.topic = currentTopic;
+      if (currentSource) q.pageReference = currentSource;
+      questions.push(q);
+    }
+  }
 
   for (const line of lines) {
     // Numbered line = new question (e.g. "1. What is..." or "23) Describe...")
     if (/^\s*\d+[\.\)]\s+\S/.test(line)) {
-      // Flush previous pair
-      if (currentQ) {
-        questions.push({
-          text: currentQ,
-          type: "flashcard_qa",
-          answer: currentA.trim(),
-          difficulty: "beginner",
-        });
-      }
+      flush();
       currentQ = line.replace(/^\s*\d+[\.\)]\s*/, "").trim();
       currentA = "";
+      currentTopic = "";
+      currentSource = "";
+      currentLevel = "";
+    } else if (TOPIC_MARKER.test(line)) {
+      currentTopic = stripTopicMarker(line);
+    } else if (SOURCE_MARKER.test(line)) {
+      currentSource = stripSourceMarker(line);
+    } else if (LEVEL_MARKER.test(line)) {
+      currentLevel = stripLevelMarker(line);
     } else if (currentQ && line.trim()) {
       // Non-numbered, non-empty line = answer content
       let cleaned = line.trim();
@@ -200,15 +263,7 @@ function parseNumberedQuestions(lines: string[]): DraftQuestion[] | null {
     }
   }
 
-  if (currentQ) {
-    questions.push({
-      text: currentQ,
-      type: "flashcard_qa",
-      answer: currentA.trim(),
-      difficulty: "beginner",
-    });
-  }
-
+  flush();
   return questions.length >= 2 ? questions : null;
 }
 

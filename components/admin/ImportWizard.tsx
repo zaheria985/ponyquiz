@@ -19,6 +19,7 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [questions, setQuestions] = useState<DraftQuestionData[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [, startParsingTransition] = useTransition();
   const [isSaving, startSavingTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -57,10 +58,11 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
           return;
         }
 
-        // Map AI results to editable DraftQuestionData, matching topic names to IDs
+        // Map results to editable DraftQuestionData
         const mapped: DraftQuestionData[] = result.data.map((q) => {
-          let topicId = "";
-          if (q.topic) {
+          // Use pre-selected topic if set, otherwise try matching AI-suggested name
+          let topicId = selectedTopicId;
+          if (!topicId && q.topic) {
             const match = topics.find(
               (t) =>
                 t.name.toLowerCase() === q.topic?.toLowerCase() ||
@@ -78,6 +80,7 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
             answer: q.answer,
             topic: q.topic,
             topic_id: topicId,
+            pageReference: q.pageReference,
             difficulty: q.difficulty || "beginner",
             explanation: q.explanation,
             included: true,
@@ -88,7 +91,7 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
         setStep("review");
       });
     },
-    [topics]
+    [topics, selectedTopicId]
   );
 
   function handleDrop(e: React.DragEvent) {
@@ -165,6 +168,8 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
       answer:
         q.type === "multiple_choice" ? null : q.answer || null,
       topic_id: q.topic_id || null,
+      topic_name: q.topic || null,
+      page_reference: q.pageReference || null,
       difficulty: q.difficulty,
       explanation: q.explanation || null,
     }));
@@ -229,74 +234,110 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
 
       {/* Step 1: Upload */}
       {step === "upload" && (
-        <div
-          className="rounded-lg border-2 border-dashed p-10 text-center transition-colors"
-          style={{
-            borderColor: dragOver
-              ? "var(--interactive)"
-              : "var(--border-light)",
-            backgroundColor: dragOver
-              ? "var(--interactive-light)"
-              : "var(--surface)",
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleDrop}
-        >
-          <div className="mb-4">
-            <svg
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mx-auto"
-              style={{ color: "var(--text-muted)" }}
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-          </div>
-          <p
-            className="text-base font-medium mb-2"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Drag and drop a document here
-          </p>
-          <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
-            Supports PDF, DOC, DOCX, and TXT files (up to 100MB)
-          </p>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+        <div className="space-y-4">
+          {/* Topic selector */}
+          <div
+            className="rounded-lg border p-4"
             style={{
-              backgroundColor: "var(--interactive)",
-              color: "var(--brand-contrast)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor =
-                "var(--interactive-hover)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--interactive)";
+              backgroundColor: "var(--surface)",
+              borderColor: "var(--border-light)",
             }}
           >
-            Choose File
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx,.txt"
-            onChange={handleFileInput}
-            className="hidden"
-          />
+            <label
+              className="block text-sm font-medium mb-2"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              Assign all questions to topic
+            </label>
+            <select
+              value={selectedTopicId}
+              onChange={(e) => setSelectedTopicId(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+              style={{
+                backgroundColor: "var(--input-bg)",
+                borderColor: "var(--input-border)",
+                color: "var(--input-text)",
+              }}
+            >
+              <option value="">No topic (assign individually later)</option>
+              {topics.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Drop zone */}
+          <div
+            className="rounded-lg border-2 border-dashed p-10 text-center transition-colors"
+            style={{
+              borderColor: dragOver
+                ? "var(--interactive)"
+                : "var(--border-light)",
+              backgroundColor: dragOver
+                ? "var(--interactive-light)"
+                : "var(--surface)",
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+          >
+            <div className="mb-4">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mx-auto"
+                style={{ color: "var(--text-muted)" }}
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </div>
+            <p
+              className="text-base font-medium mb-2"
+              style={{ color: "var(--text-primary)" }}
+            >
+              Drag and drop a document here
+            </p>
+            <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>
+              Supports PDF, DOC, DOCX, and TXT files (up to 100MB)
+            </p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              style={{
+                backgroundColor: "var(--interactive)",
+                color: "var(--brand-contrast)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  "var(--interactive-hover)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "var(--interactive)";
+              }}
+            >
+              Choose File
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.txt"
+              onChange={handleFileInput}
+              className="hidden"
+            />
+          </div>
         </div>
       )}
 

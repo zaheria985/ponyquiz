@@ -80,6 +80,8 @@ const draftQuestionSchema = z.object({
     .nullable(),
   answer: z.string().optional().nullable(),
   topic_id: z.string().uuid().optional().nullable().or(z.literal("")),
+  topic_name: z.string().optional().nullable().or(z.literal("")),
+  page_reference: z.string().max(200).optional().nullable().or(z.literal("")),
   difficulty: z.enum(difficulties),
   explanation: z.string().optional().nullable().or(z.literal("")),
 });
@@ -121,6 +123,31 @@ export async function saveDraftQuestions(
   try {
     await client.query("BEGIN");
 
+    // Auto-create topics: collect unique topic names that need IDs
+    const topicNameToId = new Map<string, string>();
+    for (const q of validQuestions) {
+      if (q.topic_id) continue; // already has an ID
+      const name = q.topic_name?.trim();
+      if (!name) continue;
+      if (topicNameToId.has(name.toLowerCase())) continue;
+
+      // Check if topic already exists (case-insensitive)
+      const existing = await client.query(
+        "SELECT id FROM topics WHERE LOWER(name) = LOWER($1)",
+        [name]
+      );
+      if (existing.rowCount && existing.rowCount > 0) {
+        topicNameToId.set(name.toLowerCase(), existing.rows[0].id);
+      } else {
+        // Create new topic
+        const inserted = await client.query(
+          "INSERT INTO topics (name) VALUES ($1) RETURNING id",
+          [name]
+        );
+        topicNameToId.set(name.toLowerCase(), inserted.rows[0].id);
+      }
+    }
+
     let inserted = 0;
     for (const q of validQuestions) {
       let options: string | null = null;
@@ -131,17 +158,24 @@ export async function saveDraftQuestions(
         answer = null;
       }
 
+      // Resolve topic ID: use explicit ID, or look up from auto-created map
+      let topicId = q.topic_id || null;
+      if (!topicId && q.topic_name?.trim()) {
+        topicId = topicNameToId.get(q.topic_name.trim().toLowerCase()) || null;
+      }
+
       await client.query(
-        `INSERT INTO questions (text, type, topic_id, difficulty, explanation, options, answer)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        `INSERT INTO questions (text, type, topic_id, difficulty, explanation, options, answer, page_reference)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
         [
           q.text,
           q.type,
-          q.topic_id || null,
+          topicId,
           q.difficulty,
           q.explanation || null,
           options,
           answer,
+          q.page_reference || null,
         ]
       );
       inserted++;
@@ -150,6 +184,7 @@ export async function saveDraftQuestions(
     await client.query("COMMIT");
 
     revalidatePath("/admin/questions");
+    revalidatePath("/admin/topics");
     revalidatePath("/admin/import");
 
     return { success: true, data: { count: inserted } };

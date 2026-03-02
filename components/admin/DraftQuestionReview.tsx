@@ -9,6 +9,7 @@ export interface DraftQuestionData {
   answer?: string;
   topic?: string;
   topic_id?: string;
+  pageReference?: string;
   difficulty?: string;
   explanation?: string;
   included: boolean;
@@ -234,6 +235,25 @@ export default function DraftQuestionReview({
           </select>
         </div>
       </div>
+
+      {/* Page reference */}
+      {question.pageReference && (
+        <div>
+          <label className="block text-xs font-medium mb-1" style={labelStyle}>
+            Page Reference
+          </label>
+          <input
+            type="text"
+            value={question.pageReference || ""}
+            onChange={(e) => update({ pageReference: e.target.value })}
+            className="w-full sm:w-48 px-3 py-2 rounded-lg border text-sm outline-none"
+            style={inputStyle}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            placeholder="e.g. p. 42"
+          />
+        </div>
+      )}
 
       {/* Type-specific answer fields */}
       {question.type === "multiple_choice" && (
