@@ -1,7 +1,11 @@
-export default function Home() {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-4xl font-bold text-text-primary">PonyQuiz</h1>
-    </main>
-  );
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/session";
+
+export default async function Home() {
+  const user = await getCurrentUser();
+  if (user) {
+    redirect("/dashboard");
+  } else {
+    redirect("/login");
+  }
 }
