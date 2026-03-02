@@ -30,7 +30,7 @@ export default function RegisterPage() {
     try {
       const result = await registerStudent(formData);
 
-      if ("error" in result && result.error) {
+      if ("error" in result) {
         setError(result.error);
         setLoading(false);
         return;

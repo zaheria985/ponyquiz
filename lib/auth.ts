@@ -2,7 +2,6 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import pool from "@/lib/db";
-import { UserRole } from "@/lib/types";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -42,7 +41,8 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as unknown as { role: UserRole }).role;
+        const userRecord = user as unknown as Record<string, unknown>;
+        token.role = userRecord.role as "admin" | "student";
       }
       return token;
     },

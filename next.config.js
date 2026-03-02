@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  serverExternalPackages: ["pg"],
+  experimental: {
+    serverComponentsExternalPackages: ["pg"],
+  },
   async rewrites() {
     return [
       { source: "/uploads/:path*", destination: "/api/uploads/:path*" },

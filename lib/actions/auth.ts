@@ -10,7 +10,7 @@ const registerSchema = z.object({
   password: z.string().min(6),
 });
 
-export async function registerStudent(formData: FormData) {
+export async function registerStudent(formData: FormData): Promise<{ success: true } | { error: string }> {
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
