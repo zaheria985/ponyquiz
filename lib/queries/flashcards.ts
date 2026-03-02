@@ -66,7 +66,7 @@ export async function getFlashcards(
          WHEN fp.status = 'still_learning' THEN 0
          ELSE 2
        END,
-       fp.last_reviewed ASC NULLS FIRST`,
+       RANDOM()`,
     params
   );
 

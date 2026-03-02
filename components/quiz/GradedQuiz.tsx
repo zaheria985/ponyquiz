@@ -5,6 +5,7 @@ import MultipleChoiceQuestion from "@/components/quiz/MultipleChoiceQuestion";
 import TrueFalseQuestion from "@/components/quiz/TrueFalseQuestion";
 import ImageQuestion from "@/components/quiz/ImageQuestion";
 import DiagramQuestion from "@/components/quiz/DiagramQuestion";
+import ShortAnswerQuestion from "@/components/quiz/ShortAnswerQuestion";
 import QuizResults from "@/components/quiz/QuizResults";
 import ProgressBar from "@/components/ui/ProgressBar";
 
@@ -592,6 +593,17 @@ function GradedQuestionRenderer({
             imageAlt={question.image_alt}
             activeHotspot={question.activeHotspot}
             options={question.options}
+            onAnswer={onAnswer}
+            disabled={false}
+            selectedAnswer={selectedAnswer}
+            correctAnswer={null}
+          />
+        )}
+
+        {(question.type === "flashcard_qa" || question.type === "flashcard_term") && (
+          <ShortAnswerQuestion
+            text={question.text}
+            type={question.type as "flashcard_qa" | "flashcard_term"}
             onAnswer={onAnswer}
             disabled={false}
             selectedAnswer={selectedAnswer}

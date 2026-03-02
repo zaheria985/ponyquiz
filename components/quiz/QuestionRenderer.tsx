@@ -5,6 +5,7 @@ import MultipleChoiceQuestion from "@/components/quiz/MultipleChoiceQuestion";
 import TrueFalseQuestion from "@/components/quiz/TrueFalseQuestion";
 import ImageQuestion from "@/components/quiz/ImageQuestion";
 import DiagramQuestion from "@/components/quiz/DiagramQuestion";
+import ShortAnswerQuestion from "@/components/quiz/ShortAnswerQuestion";
 import FeedbackCard from "@/components/quiz/FeedbackCard";
 
 interface QuizQuestionClient {
@@ -157,6 +158,17 @@ export default function QuestionRenderer({
             imageAlt={question.image_alt}
             activeHotspot={question.activeHotspot}
             options={question.options}
+            onAnswer={handleAnswer}
+            disabled={isAnswered}
+            selectedAnswer={selectedAnswer}
+            correctAnswer={feedback?.correctAnswer || null}
+          />
+        )}
+
+        {(question.type === "flashcard_qa" || question.type === "flashcard_term") && (
+          <ShortAnswerQuestion
+            text={question.text}
+            type={question.type as "flashcard_qa" | "flashcard_term"}
             onAnswer={handleAnswer}
             disabled={isAnswered}
             selectedAnswer={selectedAnswer}

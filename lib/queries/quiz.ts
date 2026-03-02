@@ -3,6 +3,8 @@ import pool from "@/lib/db";
 const QUIZ_TYPES = [
   "multiple_choice",
   "true_false",
+  "flashcard_qa",
+  "flashcard_term",
   "labeled_diagram",
   "photo_id",
   "image_text",
