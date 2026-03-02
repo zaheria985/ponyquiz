@@ -1,8 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const pdfParse = require("pdf-parse"); // CJS - no ESM export
-const mammoth = require("mammoth"); // CJS - no ESM export
-
 export interface DraftQuestion {
   text: string;
   type:
@@ -39,11 +36,13 @@ async function extractText(
   }
 
   if (ext === ".pdf") {
+    const pdfParse = require("pdf-parse"); // CJS, lazy-loaded to avoid DOMMatrix crash
     const result = await pdfParse(buffer);
     return result.text;
   }
 
   // .doc or .docx
+  const mammoth = require("mammoth"); // CJS, lazy-loaded
   const result = await mammoth.extractRawText({ buffer });
   return result.value as string;
 }
