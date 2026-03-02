@@ -140,6 +140,84 @@ export async function updateHotspots(
   return { success: true };
 }
 
+export async function generateDiagramQuestions(
+  formData: FormData
+): Promise<{ success: true; data: { count: number } } | { error: string }> {
+  const idParsed = imageIdSchema.safeParse({ id: formData.get("id") });
+  if (!idParsed.success) {
+    return { error: "Invalid image ID." };
+  }
+
+  const { id } = idParsed.data;
+
+  // Fetch image with hotspots
+  const imgRes = await pool.query(
+    "SELECT id, hotspots, alt_text FROM images WHERE id = $1",
+    [id]
+  );
+  if (imgRes.rowCount === 0) {
+    return { error: "Image not found." };
+  }
+
+  const image = imgRes.rows[0];
+  const hotspots = image.hotspots || [];
+
+  if (!Array.isArray(hotspots) || hotspots.length === 0) {
+    return { error: "Image has no hotspots. Add labels first." };
+  }
+
+  // Get optional topic_id and difficulty from form
+  const topicId = (formData.get("topic_id") as string) || null;
+  const difficulty = (formData.get("difficulty") as string) || "beginner";
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    let inserted = 0;
+    for (const hotspot of hotspots) {
+      if (!hotspot.label?.trim()) continue;
+
+      // Build multiple choice options from other hotspot labels
+      const otherLabels = hotspots
+        .filter((h: { label: string }) => h.label !== hotspot.label)
+        .map((h: { label: string }) => h.label);
+
+      // Pick up to 3 random wrong answers
+      const shuffled = otherLabels.sort(() => Math.random() - 0.5).slice(0, 3);
+      const options = [
+        { text: hotspot.label, isCorrect: true },
+        ...shuffled.map((text: string) => ({ text, isCorrect: false })),
+      ].sort(() => Math.random() - 0.5);
+
+      await client.query(
+        `INSERT INTO questions (text, type, topic_id, difficulty, options, answer, image_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          `Identify this part: ${hotspot.label}`,
+          "labeled_diagram",
+          topicId,
+          difficulty,
+          JSON.stringify(options),
+          hotspot.label,
+          id,
+        ]
+      );
+      inserted++;
+    }
+
+    await client.query("COMMIT");
+    revalidatePath("/admin/questions");
+    revalidatePath("/admin/images");
+    return { success: true, data: { count: inserted } };
+  } catch {
+    await client.query("ROLLBACK");
+    return { error: "Failed to generate diagram questions." };
+  } finally {
+    client.release();
+  }
+}
+
 export async function deleteImage(
   formData: FormData
 ): Promise<{ success: true } | { error: string }> {

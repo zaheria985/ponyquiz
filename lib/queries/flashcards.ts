@@ -3,7 +3,7 @@ import pool from "@/lib/db";
 export interface FlashcardWithProgress {
   id: string;
   text: string;
-  type: "flashcard_qa" | "flashcard_term" | "flashcard_image";
+  type: "flashcard_qa" | "flashcard_term" | "flashcard_image" | "labeled_diagram";
   topic_id: string | null;
   topic_name: string | null;
   difficulty: string;
@@ -12,6 +12,8 @@ export interface FlashcardWithProgress {
   image_id: string | null;
   image_path: string | null;
   image_alt: string | null;
+  hotspots: { x: number; y: number; label: string }[] | null;
+  options: { text: string; isCorrect: boolean }[] | null;
   status: "got_it" | "still_learning" | null;
   last_reviewed: string | null;
   review_count: number;
@@ -22,7 +24,7 @@ export async function getFlashcards(
   topicId?: string
 ): Promise<FlashcardWithProgress[]> {
   const conditions = [
-    "q.type IN ('flashcard_qa', 'flashcard_term', 'flashcard_image')",
+    "q.type IN ('flashcard_qa', 'flashcard_term', 'flashcard_image', 'labeled_diagram')",
     "q.active = true",
   ];
   const params: string[] = [userId];
@@ -48,6 +50,8 @@ export async function getFlashcards(
        q.image_id,
        i.file_path AS image_path,
        i.alt_text AS image_alt,
+       i.hotspots,
+       q.options,
        fp.status,
        fp.last_reviewed,
        COALESCE(fp.review_count, 0) AS review_count
@@ -83,7 +87,7 @@ export async function getFlashcardTopicCounts(): Promise<FlashcardTopicCount[]> 
        COUNT(q.id)::int AS count
      FROM topics t
      INNER JOIN questions q ON q.topic_id = t.id
-     WHERE q.type IN ('flashcard_qa', 'flashcard_term', 'flashcard_image')
+     WHERE q.type IN ('flashcard_qa', 'flashcard_term', 'flashcard_image', 'labeled_diagram')
        AND q.active = true
      GROUP BY t.id, t.name
      ORDER BY t.sort_order, t.name`
@@ -95,7 +99,7 @@ export async function getTotalFlashcardCount(): Promise<number> {
   const res = await pool.query(
     `SELECT COUNT(*)::int AS count
      FROM questions
-     WHERE type IN ('flashcard_qa', 'flashcard_term', 'flashcard_image')
+     WHERE type IN ('flashcard_qa', 'flashcard_term', 'flashcard_image', 'labeled_diagram')
        AND active = true`
   );
   return res.rows[0].count;

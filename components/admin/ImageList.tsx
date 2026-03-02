@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { deleteImage, updateImage } from "@/lib/actions/images";
+import { deleteImage, updateImage, generateDiagramQuestions } from "@/lib/actions/images";
 import type { Image } from "@/lib/queries/images";
 import Badge from "@/components/ui/Badge";
 import Modal from "@/components/ui/Modal";
@@ -63,6 +63,30 @@ export default function ImageList({ initialImages }: ImageListProps) {
         setError(result.error);
       } else {
         closeEdit();
+      }
+    });
+  }
+
+  function handleGenerateCards(image: Image) {
+    if (!image.hotspots?.length) {
+      setError("Add hotspot labels to this image first.");
+      return;
+    }
+    if (
+      !confirm(
+        `Generate ${image.hotspots.length} study cards from this image's hotspot labels?`
+      )
+    )
+      return;
+    setError(null);
+
+    const formData = new FormData();
+    formData.set("id", image.id);
+
+    startTransition(async () => {
+      const result = await generateDiagramQuestions(formData);
+      if ("error" in result) {
+        setError(result.error);
       }
     });
   }
@@ -268,6 +292,29 @@ export default function ImageList({ initialImages }: ImageListProps) {
                   >
                     Hotspots
                   </button>
+                  {(img.hotspots?.length ?? 0) > 0 && (
+                    <button
+                      onClick={() => handleGenerateCards(img)}
+                      disabled={isPending}
+                      className="px-2 py-1 rounded text-xs font-medium transition-colors"
+                      style={{
+                        backgroundColor: "var(--surface-muted)",
+                        color: "var(--text-secondary)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          "var(--success-bg)";
+                        e.currentTarget.style.color = "var(--success-text)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          "var(--surface-muted)";
+                        e.currentTarget.style.color = "var(--text-secondary)";
+                      }}
+                    >
+                      Generate Cards
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDelete(img)}
                     disabled={isPending}

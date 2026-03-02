@@ -9,12 +9,13 @@ import ProgressBar from "@/components/ui/ProgressBar";
 interface Flashcard {
   id: string;
   text: string;
-  type: "flashcard_qa" | "flashcard_term" | "flashcard_image";
+  type: "flashcard_qa" | "flashcard_term" | "flashcard_image" | "labeled_diagram";
   topic_id: string | null;
   topic_name: string | null;
   answer: string | null;
   image_path: string | null;
   image_alt: string | null;
+  hotspots: { x: number; y: number; label: string }[] | null;
   status: "got_it" | "still_learning" | null;
   review_count: number;
 }
@@ -289,6 +290,7 @@ export default function FlashcardViewer({
           answer={currentCard.answer || ""}
           imagePath={currentCard.image_path}
           imageAlt={currentCard.image_alt}
+          hotspots={currentCard.hotspots}
           flipped={flipped}
           onFlip={handleFlip}
         />
