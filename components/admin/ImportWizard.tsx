@@ -19,7 +19,7 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [questions, setQuestions] = useState<DraftQuestionData[]>([]);
   const [dragOver, setDragOver] = useState(false);
-  const [isParsing, startParsingTransition] = useTransition();
+  const [, startParsingTransition] = useTransition();
   const [isSaving, startSavingTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -196,12 +196,6 @@ export default function ImportWizard({ topics }: ImportWizardProps) {
   }
 
   const includedCount = questions.filter((q) => q.included).length;
-
-  const inputStyle = {
-    backgroundColor: "var(--input-bg)",
-    borderColor: "var(--input-border)",
-    color: "var(--input-text)",
-  };
 
   return (
     <div>
