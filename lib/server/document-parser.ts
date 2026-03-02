@@ -229,14 +229,18 @@ export async function parseDocument(
     return qaParsed;
   }
 
+  // Q/A parser didn't detect a pattern — build a diagnostic preview
+  const textLines = text.split(/\r?\n/);
+  const lineCount = textLines.length;
+  const firstLines = textLines.slice(0, 8).join(" | ").slice(0, 300);
+  const parserDebug = `[Parser debug: ${lineCount} lines, first lines: "${firstLines}"]`;
+  console.log("Q/A parser did not detect pattern.", parserDebug);
+
   // Send to Claude API for parsing
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    // Give a more helpful error: show what the parser saw
-    const lineCount = text.split(/\r?\n/).length;
-    const preview = text.slice(0, 200).replace(/\n/g, " ").trim();
     throw new Error(
-      `Could not detect Q/A structure in this document (${lineCount} lines, preview: "${preview}..."). ` +
+      `Could not detect Q/A structure in this document. ${parserDebug}. ` +
       `To use AI parsing, set the ANTHROPIC_API_KEY environment variable.`
     );
   }
@@ -291,7 +295,7 @@ export async function parseDocument(
     }
   } catch {
     throw new Error(
-      "Failed to parse AI response as JSON. The document may be too complex."
+      `Failed to parse AI response. Q/A parser also could not detect a pattern. ${parserDebug}`
     );
   }
 
