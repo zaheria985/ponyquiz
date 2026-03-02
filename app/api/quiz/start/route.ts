@@ -8,6 +8,7 @@ const startSchema = z.object({
   topicIds: z.array(z.string().uuid()).optional(),
   difficulty: z.string().optional(),
   count: z.number().int().min(5).max(20).default(10),
+  mode: z.enum(["practice", "graded"]).default("practice"),
 });
 
 export async function POST(request: NextRequest) {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { topicIds, difficulty, count } = parsed.data;
+  const { topicIds, difficulty, count, mode } = parsed.data;
 
   try {
     const questions = await getRandomQuestions(topicIds, difficulty, count);
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const attemptResult = await startQuizAttempt({
       user_id: user.id,
-      mode: "practice",
+      mode,
       total_questions: questions.length,
       topic_filter: topicIds,
       difficulty,
