@@ -27,12 +27,10 @@ interface TopicOption {
 
 interface FlashcardViewerProps {
   topics: TopicOption[];
-  totalCount: number;
 }
 
 export default function FlashcardViewer({
   topics,
-  totalCount,
 }: FlashcardViewerProps) {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);

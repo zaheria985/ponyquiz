@@ -7,7 +7,7 @@ import pool from "@/lib/db";
 const progressSchema = z.object({
   question_id: z.string().uuid("Invalid question ID"),
   user_id: z.string().uuid("Invalid user ID"),
-  status: z.enum(["got_it", "still_learning"], "Status must be got_it or still_learning"),
+  status: z.enum(["got_it", "still_learning"]),
 });
 
 export async function updateFlashcardProgress(

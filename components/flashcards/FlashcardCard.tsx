@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 interface FlashcardCardProps {
   type: "flashcard_qa" | "flashcard_term" | "flashcard_image";
   question: string;

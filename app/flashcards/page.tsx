@@ -25,7 +25,7 @@ export default async function FlashcardsPage() {
   return (
     <div>
       <PageHeader title="Flashcards" />
-      <FlashcardViewer topics={topics} totalCount={totalCount} />
+      <FlashcardViewer topics={topics} />
     </div>
   );
 }
