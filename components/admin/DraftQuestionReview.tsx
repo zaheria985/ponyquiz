@@ -302,9 +302,9 @@ export default function DraftQuestionReview({
               <input
                 type="radio"
                 name={`tf_answer_${index}`}
-                value="true"
-                checked={question.answer === "true"}
-                onChange={() => update({ answer: "true" })}
+                value="True"
+                checked={question.answer?.toLowerCase() === "true"}
+                onChange={() => update({ answer: "True" })}
                 style={{ accentColor: "var(--interactive)" }}
               />
               True
@@ -316,9 +316,9 @@ export default function DraftQuestionReview({
               <input
                 type="radio"
                 name={`tf_answer_${index}`}
-                value="false"
-                checked={question.answer === "false"}
-                onChange={() => update({ answer: "false" })}
+                value="False"
+                checked={question.answer?.toLowerCase() === "false"}
+                onChange={() => update({ answer: "False" })}
                 style={{ accentColor: "var(--interactive)" }}
               />
               False
