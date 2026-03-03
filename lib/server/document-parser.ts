@@ -168,6 +168,145 @@ function tryParseQAPairs(text: string): DraftQuestion[] | null {
   return null;
 }
 
+/** Section header lines to skip (e.g., "--- MULTIPLE CHOICE ---", "=== END OF CHAPTER 1 ===") */
+const SECTION_HEADER = /^\s*[-=]{3,}\s*.+\s*[-=]{3,}\s*$/;
+
+/**
+ * Detect question type and extract structured data from raw Q/A text.
+ * Returns the type, cleaned question text, options (for MC), answer, and explanation.
+ */
+function detectQuestionType(
+  rawQuestion: string,
+  rawAnswer: string
+): {
+  type: DraftQuestion["type"];
+  text: string;
+  options?: DraftQuestion["options"];
+  answer?: string;
+  explanation?: string;
+} {
+  let text = rawQuestion.trim();
+  let answer = rawAnswer.trim();
+  let explanation: string | undefined;
+
+  // 1. True/False: question starts with "True or False:" or "T/F:"
+  const tfPrefix = text.match(/^(?:True\s+or\s+False|T\s*\/\s*F)\s*:\s*/i);
+  if (tfPrefix) {
+    text = text.slice(tfPrefix[0].length).trim();
+    // Parse answer: "False — it started in England" → answer: "False", explanation: rest
+    const tfAnswer = answer.match(/^(True|False)\b\s*(?:[—–\-:,.]?\s*(.+))?$/i);
+    if (tfAnswer) {
+      answer = tfAnswer[1].charAt(0).toUpperCase() + tfAnswer[1].slice(1).toLowerCase();
+      if (tfAnswer[2]?.trim()) {
+        explanation = tfAnswer[2].trim();
+      }
+    }
+    return { type: "true_false", text, answer, explanation };
+  }
+
+  // 2. Multiple Choice with inline (a)/(b)/(c)/(d) options in the question text
+  const inlineOptions = [...text.matchAll(/\(([a-z])\)\s+([^(]+?)(?=\s*\([a-z]\)\s|$)/gi)];
+  if (inlineOptions.length >= 2) {
+    // Strip the options from the question text
+    const firstOptionIdx = text.indexOf(inlineOptions[0][0]);
+    const cleanedQ = text.slice(0, firstOptionIdx).trim();
+    if (cleanedQ) text = cleanedQ;
+
+    // Parse the answer: "(b) English" → letter "b", text "English"
+    const answerLetterMatch = answer.match(/^\(([a-z])\)\s*/i);
+    let correctLetter = "";
+    let correctText = answer;
+    if (answerLetterMatch) {
+      correctLetter = answerLetterMatch[1].toLowerCase();
+      correctText = answer.slice(answerLetterMatch[0].length).trim();
+    }
+    // Strip explanation after dash/semicolon in answer
+    const explMatch = correctText.match(/^(.+?)\s*[—–;]\s+(.+)$/);
+    if (explMatch) {
+      correctText = explMatch[1].trim();
+      explanation = explMatch[2].trim();
+    }
+
+    const options = inlineOptions.map((m) => ({
+      text: m[2].trim(),
+      isCorrect: correctLetter
+        ? m[1].toLowerCase() === correctLetter
+        : m[2].trim().toLowerCase() === correctText.toLowerCase(),
+    }));
+
+    // Ensure at least one correct answer
+    if (!options.some((o) => o.isCorrect)) {
+      const best = options.find(
+        (o) =>
+          correctText.toLowerCase().includes(o.text.toLowerCase()) ||
+          o.text.toLowerCase().includes(correctText.toLowerCase())
+      );
+      if (best) best.isCorrect = true;
+      else if (options.length > 0) options[0].isCorrect = true;
+    }
+
+    return { type: "multiple_choice", text, options, explanation };
+  }
+
+  // 3. Fill-in-the-Blank with word bank: "(Word bank: X, Y, Z)" at end of question
+  const wordBankMatch = text.match(/\(?\s*Word\s+bank\s*:\s*(.+?)\)?\s*$/i);
+  if (wordBankMatch) {
+    text = text.slice(0, text.indexOf(wordBankMatch[0])).trim();
+    const bankItems = wordBankMatch[1].split(/\s*,\s*/);
+    const options = bankItems
+      .filter((item) => item.trim())
+      .map((item) => ({
+        text: item.trim(),
+        isCorrect: item.trim().toLowerCase() === answer.toLowerCase(),
+      }));
+
+    if (!options.some((o) => o.isCorrect)) {
+      const best = options.find(
+        (o) =>
+          answer.toLowerCase().includes(o.text.toLowerCase()) ||
+          o.text.toLowerCase().includes(answer.toLowerCase())
+      );
+      if (best) best.isCorrect = true;
+    }
+
+    if (options.length >= 2) {
+      return { type: "multiple_choice", text, options };
+    }
+  }
+
+  // 4. This-or-That: "Mare or stallion: Which is a female horse?"
+  // Pattern: option text " or " option text ": " question text
+  // Uses lazy matching to support hyphens, apostrophes, and multi-word options
+  const thisOrThat = text.match(/^(.+?)\s+or\s+(.+?)\s*:\s*(.+)$/i);
+  if (thisOrThat) {
+    const opt1 = thisOrThat[1].trim();
+    const opt2 = thisOrThat[2].trim();
+    const questionBody = thisOrThat[3].trim();
+    const answerLower = answer.toLowerCase().trim();
+    const opt1Lower = opt1.toLowerCase();
+    const opt2Lower = opt2.toLowerCase();
+    // Match if answer equals or starts with one of the options
+    // Handles answers like "Pommel (NOT the cantle)" matching option "Pommel"
+    const matchesOpt1 =
+      answerLower === opt1Lower || answerLower.startsWith(opt1Lower);
+    const matchesOpt2 =
+      answerLower === opt2Lower || answerLower.startsWith(opt2Lower);
+    if (matchesOpt1 || matchesOpt2) {
+      return {
+        type: "multiple_choice",
+        text: questionBody,
+        options: [
+          { text: opt1, isCorrect: matchesOpt1 },
+          { text: opt2, isCorrect: matchesOpt2 },
+        ],
+      };
+    }
+  }
+
+  // 5. Default: flashcard Q/A
+  return { type: "flashcard_qa", text, answer };
+}
+
 function parseQAMarkers(lines: string[]): DraftQuestion[] | null {
   const questions: DraftQuestion[] = [];
   let currentQ = "";
@@ -202,12 +341,22 @@ function parseQAMarkers(lines: string[]): DraftQuestion[] | null {
         }
       }
 
+      // Auto-detect question type from content
+      const detected = detectQuestionType(currentQ.trim(), answer);
+
       const q: DraftQuestion = {
-        text: currentQ,
-        type: "flashcard_qa",
-        answer,
+        text: detected.text,
+        type: detected.type,
         difficulty: currentLevel ? parseDifficulty(currentLevel) : "beginner",
       };
+
+      if (detected.options) {
+        q.options = detected.options;
+      } else {
+        q.answer = detected.answer ?? answer;
+      }
+
+      if (detected.explanation) q.explanation = detected.explanation;
       if (currentTopic) q.topic = currentTopic;
       if (currentSource) q.pageReference = currentSource;
       questions.push(q);
@@ -215,6 +364,9 @@ function parseQAMarkers(lines: string[]): DraftQuestion[] | null {
   }
 
   for (const line of lines) {
+    // Skip section headers like "--- MULTIPLE CHOICE ---"
+    if (SECTION_HEADER.test(line)) continue;
+
     if (Q_MARKER.test(line)) {
       flush();
       currentQ = stripQMarker(line);
